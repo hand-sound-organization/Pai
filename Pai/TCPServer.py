@@ -1,6 +1,11 @@
+#  测试代码 没用
+#
+#
+#
+#
 from socket import *
 
-HOST = '127.0.0.1'
+HOST = '169.254.215.65'
 PORT = 9191
 BUFFER = 1024
 Server_sockect = socket(family=AF_INET, type=SOCK_STREAM)
