@@ -18,8 +18,9 @@ def get_local_IP():
     get local host and ip address
     '''
     try:
-        host_name = socket.gethostname()
-        host_ip = socket.gethostbyname(host_name)
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8', 80))
+        host_ip = s.getsockname()[0]
         return host_ip
     except Exception as e:
         raise 'Unable to get Hostname and IP: {}'.format(e)

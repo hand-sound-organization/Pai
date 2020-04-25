@@ -13,8 +13,8 @@ logger = gen_logger('LockSSDP')
 
 class Server(threading.Thread):
     BCAST_IP = '239.255.255.250'
-    UPNP_PORT = 1900
-    IP = '0.0.0.0'
+    UPNP_PORT = 1901
+    IP = get_local_IP()
     M_SEARCH_REQ_MATCH = "LOCK-SEARCH"
     TOKEN = ''
 
