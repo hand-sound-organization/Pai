@@ -7,6 +7,7 @@ import re
 import sys
 import time
 import threading
+import miniupnpc
 
 logger = gen_logger('LockSSDP')
 
@@ -44,8 +45,8 @@ class Server(threading.Thread):
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,
                             1)  # linux 使用：socket.SO_REUSEPORT 而不是 socket.SO_REUSEADDR
-            sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP,
-                            socket.inet_aton(self.BCAST_IP) + socket.inet_aton(self.IP))
+            # sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP,
+            #                 socket.inet_aton(self.BCAST_IP) + socket.inet_aton(self.IP))
             sock.bind((self.IP, self.UPNP_PORT))
             sock.settimeout(1)
             logger.info("upnp server is listening...")
@@ -106,4 +107,38 @@ class Server(threading.Thread):
             Client_sockect.close()
         except:
             print("Server error!")
+
+
+
+
+class Nat():
+    def __init__(self):
+        self.upnp = miniupnpc.UPnP()
+        self.upnp.discoverdelay = 10
+
+    def addPortForward(self, internal_port, external_port):
+        try:
+            discover = self.upnp.discover()
+            igd = self.upnp.selectigd()
+            # addportmapping(external-port, protocol, internal-host, internal-port, description, remote-host)
+            port_result = self.upnp.addportmapping(external_port, 'TCP', self.upnp.lanaddr, internal_port,
+                                                   'spectre upnp nap mapping', '')
+            # logger.info('Port Forward Attempt: Mapping {0} --> {1} ... {2}'.format(internal_port, external_port, 'OK' if port_result else 'Fail'))
+            # if succeed, return (external_ip, external_port)
+            return (self.upnp.externalipaddress(), external_port)
+        except Exception as e:
+            logger.error('Error in upnp nat port forward: %s', e)
+            # Bind find, return None
+            return None
+
+    def removePortForward(self, external_port):
+        try:
+            discover = self.upnp.discover()
+            igd = self.upnp.selectigd()
+            port_result = self.upnp.deleteportmapping(external_port, 'TCP')
+            logger.info("Port Delete Attempt: ~{0} ... {1}".format(external_port, 'OK' if port_result else 'Fail'))
+            return True
+        except Exception as e:
+            logger.error('Error in upnp nat port remove: %s', e)
+            return False
 
