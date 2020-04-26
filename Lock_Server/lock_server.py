@@ -5,7 +5,7 @@ from Lock_Server.Util import gen_logger, get_local_IP
 import socket
 import re
 import sys
-import time
+from datetime import datetime
 import threading
 
 logger = gen_logger('LockSSDP')
@@ -14,7 +14,7 @@ logger = gen_logger('LockSSDP')
 class Server(threading.Thread):
     BCAST_IP = '239.255.255.250'
     UPNP_PORT = 1901
-    IP = '192.168.0.100'
+    IP = get_local_IP()
     M_SEARCH_REQ_MATCH = "LOCK-SEARCH"
     TOKEN = ''
 
@@ -73,8 +73,9 @@ class Server(threading.Thread):
             Version: Touch Voice SSDP 1.0
             Exception: None
             Location: {}_{}://{}::{}|
+            Time:{}
             ------------------------------------------------
-            """.format(self.protocol, self.networkid, local_ip, self.port)  # .replace("\n", "\r\n")
+            """.format(self.protocol, self.networkid, local_ip, self.port, datetime.now())  # .replace("\n", "\r\n")
             outSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             outSock.sendto(UPNP_RESPOND.encode('ASCII'), addr)
             logger.debug('response data: %s', UPNP_RESPOND)
