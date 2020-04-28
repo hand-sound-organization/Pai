@@ -18,8 +18,11 @@ def get_local_IP():
     get local host and ip address
     '''
     try:
-        host_name = socket.gethostname()
-        host_ip = socket.gethostbyname(host_name)
-        return host_ip
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('www.baidu.com', 0))
+        ip = s.getsockname()[0]
+        # host_name = socket.gethostname()
+        # host_ip = socket.gethostbyname(host_name)
+        return ip
     except Exception as e:
         raise 'Unable to get Hostname and IP: {}'.format(e)
