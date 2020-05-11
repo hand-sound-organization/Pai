@@ -3,7 +3,8 @@ from Lock_Server.dbconfig import Base
 
 
 class User(Base):
-    id = Column(Integer,primary_key=True)
+    __tablename__ = 'user'
+    id = Column(Integer, primary_key=True)
     username = Column(String(50))
     password = Column(String(50))
 

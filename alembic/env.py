@@ -5,9 +5,9 @@ from sqlalchemy import pool
 
 from alembic import context
 
-import os
-import sys
-from Lock_Server.dbconfig import Base
+# import os
+# import sys
+# from Lock_Server.dbconfig import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -22,8 +22,11 @@ fileConfig(config.config_file_name)
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-target_metadata = Base.metadata
+
+import os, sys
+sys.path.append(os.getcwd())
+from Lock_Server import dbconfig
+target_metadata = dbconfig.Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
