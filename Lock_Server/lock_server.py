@@ -42,7 +42,7 @@ class Server(threading.Thread):
         '''
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT,
                             1)  # linux 使用：socket.SO_REUSEPORT 而不是 socket.SO_REUSEADDR
             sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP,
                             socket.inet_aton(self.BCAST_IP) + socket.inet_aton(self.IP))
@@ -87,6 +87,7 @@ class Server(threading.Thread):
     def newTCPsock(self):
         Server_sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         Server_sock.bind((get_local_IP(), self.port))
+        Server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT,1)
         Server_sock.listen(5)
         try:
             print("Waiting for connection...")
