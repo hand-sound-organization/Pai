@@ -1,13 +1,16 @@
 # 树莓派服务器实例定义
 #
 #
+import time
 from Lock_Server.Util import gen_logger, get_local_IP
 import socket
 import re
 import sys
 from datetime import datetime
 import threading
-
+import  json
+from Lock_Server.dbconfig import Base, engine, User
+from sqlalchemy.orm import sessionmaker
 logger = gen_logger('LockSSDP')
 
 
@@ -16,7 +19,7 @@ class Server(threading.Thread):
     UPNP_PORT = 1901
     IP = '0.0.0.0'
     M_SEARCH_REQ_MATCH = "LOCK-SEARCH"
-    TOKEN = ''
+    message = ''
 
     def __init__(self, port, protocal, networkid):
         '''
@@ -42,7 +45,7 @@ class Server(threading.Thread):
         '''
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT,
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,
                             1)  # linux 使用：socket.SO_REUSEPORT 而不是 socket.SO_REUSEADDR
             sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP,
                             socket.inet_aton(self.BCAST_IP) + socket.inet_aton(self.IP))
@@ -87,25 +90,46 @@ class Server(threading.Thread):
     def newTCPsock(self):
         Server_sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         Server_sock.bind((get_local_IP(), self.port))
-        Server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT,1)
+        Server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,1)
         Server_sock.listen(5)
         try:
             print("Waiting for connection...")
             Client_sockect, Client_addr = Server_sock.accept()
             print("Client address is ", Client_addr)
             while True:
-                self.TOKEN = Client_sockect.recv(1024).decode()
+                self.message = Client_sockect.recv(1024).decode()
+                print(self.message)
+                self.message = json.loads(self.message)
+                print(self.message['PAGEID'])
+                print(self.message['USERNAME'])
+                print(self.message['LOCKID'])
+                print(self.message['TOKEN'])
+                print(self.message['MEMBERLIST'])
+                print(self.message['DATASTART'])
+                print(self.message['DATAEND'])
+                print(self.message['DATALIST'])
+                print(self.message['IsOver'])
+                Session = sessionmaker(bind=engine)
+                session = Session()
+                data = session.query(User).filter_by(id=1).first()
+                if self.message['PAGEID'] == 2:
+                    print(str(data.memberlist).replace('[', '').replace(']', ''))
+                    Client_sockect.send(str(data.memberlist).replace('[', '').replace(']', '').encode())
                 # 获取token并验证
-                #
-                #
-                #
-                #
-                #
-                #
-                print(self.TOKEN)
-                if "Lock Session End" in self.TOKEN:  # 会话结束标识 ‘LockSSDP End’
+                # Session = sessionmaker(bind=engine)
+                # session = Session()
+                # if len(self.message['DATALIST']) > 0 and len(self.message['MEMBERLIST']) > 0:
+                #     user1 = User(username=self.message['USERNAME'], lockid=self.message['LOCKID'], token=self.message['TOKEN'],
+                #                  memberlist=str(self.message['MEMBERLIST']), datastart= str(self.message['DATASTART']),
+                #                  dataend= str(self.message['DATAEND']), datalist= str(self.message['DATALIST']))
+                #     session.add(user1)
+                #     session.commit()
+
+                if self.message['IsOver'] == "True":  # 会话结束标识 ‘LockSSDP End’
+                    time.sleep(0.5)
                     break
             Client_sockect.close()
-        except:
-            print("Server error!")
+        except Exception as e:
+            print("Server error!",e)
+
 
