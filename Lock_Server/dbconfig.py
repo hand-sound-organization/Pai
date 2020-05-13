@@ -12,13 +12,9 @@ class User(Base):
     username = Column(String(50))
     lockid = Column(String(50))
     token = Column(String(50))
-    memberlist = Column(String(50))
-    datastart = Column(String(100))
-    dataend = Column(String(50))
-    datalist = Column(String(150))
 
     def __repr__(self):
-        return "<User(username='%s', password='%s')>" % (self.username,self.password)
+        return "<User(username='%s')>" % (self.username)
 
 
 # Base.metadata.drop_all()

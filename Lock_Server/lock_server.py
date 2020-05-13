@@ -100,30 +100,20 @@ class Server(threading.Thread):
                 self.message = Client_sockect.recv(1024).decode()
                 print(self.message)
                 self.message = json.loads(self.message)
-                print(self.message['PAGEID'])
-                print(self.message['USERNAME'])
-                print(self.message['LOCKID'])
-                print(self.message['TOKEN'])
-                print(self.message['MEMBERLIST'])
-                print(self.message['DATASTART'])
-                print(self.message['DATAEND'])
-                print(self.message['DATALIST'])
-                print(self.message['IsOver'])
-                Session = sessionmaker(bind=engine)
-                session = Session()
-                data = session.query(User).filter_by(id=1).first()
-                if self.message['PAGEID'] == 2:
-                    print(str(data.memberlist).replace('[', '').replace(']', ''))
-                    Client_sockect.send(str(data.memberlist).replace('[', '').replace(']', '').encode())
                 # 获取token并验证
-                # Session = sessionmaker(bind=engine)
-                # session = Session()
-                # if len(self.message['DATALIST']) > 0 and len(self.message['MEMBERLIST']) > 0:
-                #     user1 = User(username=self.message['USERNAME'], lockid=self.message['LOCKID'], token=self.message['TOKEN'],
-                #                  memberlist=str(self.message['MEMBERLIST']), datastart= str(self.message['DATASTART']),
-                #                  dataend= str(self.message['DATAEND']), datalist= str(self.message['DATALIST']))
-                #     session.add(user1)
-                #     session.commit()
+                if self.message['PAGEID'] == 'bind':
+                    Session = sessionmaker(bind=engine)
+                    session = Session()
+                    user1 = User(username=self.message['USERNAME'], lockid=self.message['LOCKID'],
+                                 token=self.message['TOKEN'])
+                    session.add(user1)
+                    session.commit()
+                elif self.message['PAGEID'] == 'vibration':
+                    pass
+                elif self.message['PAGEID'] == 'createclock':
+                    pass
+                elif self.message['PAGEID'] == 'deleteclock':
+                    pass
 
                 if self.message['IsOver'] == "True":  # 会话结束标识 ‘LockSSDP End’
                     time.sleep(0.5)
@@ -133,3 +123,7 @@ class Server(threading.Thread):
             print("Server error!",e)
 
 
+# vibration 发出振动注册用户
+# createclock 创建门链
+# deleteclock 删除门链
+# bind 绑定
