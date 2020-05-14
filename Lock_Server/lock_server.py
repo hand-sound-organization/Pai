@@ -11,6 +11,7 @@ import threading
 import  json
 from Lock_Server.dbconfig import Base, engine, User
 from sqlalchemy.orm import sessionmaker
+
 logger = gen_logger('LockSSDP')
 
 
@@ -21,7 +22,7 @@ class Server(threading.Thread):
     M_SEARCH_REQ_MATCH = "LOCK-SEARCH"
     message = ''
 
-    def __init__(self, port, protocal, networkid):
+    def __init__(self, port, protocal, networkid,event):
         '''
         port: a blockchain network port to broadcast to others
         '''
@@ -30,9 +31,11 @@ class Server(threading.Thread):
         self.port = port
         self.protocol = protocal
         self.networkid = networkid
+        self.event = event
         return
 
     def run(self):
+
         self.listen()
 
     def stop(self):
@@ -62,8 +65,10 @@ class Server(threading.Thread):
                 else:
                     if self.M_SEARCH_REQ_MATCH in data.decode('ASCII'):
                         logger.debug("received M-SEARCH from %s \n %s", addr, data)
+                        self.event.clear()
                         self.respond(addr)
                         self.newTCPsock()
+                        self.event.set()
         except Exception as e:
             logger.error('Error in npnp server listening: %s', e)
 
@@ -88,6 +93,7 @@ class Server(threading.Thread):
 
     # 树莓派建立新的TCP监听，用来与APP进行交互
     def newTCPsock(self):
+
         Server_sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         Server_sock.bind((get_local_IP(), self.port))
         Server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,1)
