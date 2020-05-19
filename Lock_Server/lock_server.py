@@ -4,13 +4,19 @@
 import time
 from Lock_Server.Util import gen_logger, get_local_IP
 import socket
-import re
-import sys
 from datetime import datetime
 import threading
 import  json
-from Lock_Server.dbconfig import Base, engine, User
+from Lock_Server.dbconfig import Base, engine, User,Threshold
 from sqlalchemy.orm import sessionmaker
+
+
+import numpy as npy
+from Lock_Server.MFCC import MFCC
+from Lock_Server.play import Play
+from multiprocessing import Queue,Manager
+from sklearn import neighbors
+import joblib
 
 logger = gen_logger('LockSSDP')
 
@@ -114,8 +120,81 @@ class Server(threading.Thread):
                                  token=self.message['TOKEN'])
                     session.add(user1)
                     session.commit()
+                    session.close()
                 elif self.message['PAGEID'] == 'vibration':
-                    pass
+                    t = time.time()
+                    strt = time.strftime("%b_%d_%Y_%H_%M_%S", time.gmtime(t))
+                    #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+                    manager = Manager()
+                    queue = manager.Queue()
+                    vectors = npy.ones((1, 2000))
+                    queue.put(vectors)
+                    for x in range(0, 40):  # 30 -> pos,10 -> baseline
+                        mfcc = MFCC('Lock_Server/vibration.wav', queue)
+                        play = Play()
+                        play.start()
+                        time.sleep(0.16)
+                        mfcc.start()
+
+                        play.join()
+                        mfcc.join()
+                        time.sleep(1)
+                        if x == 29:
+                            print("请抬起手")
+                    vectors = queue.get()
+                    print(vectors)
+                    print(vectors.shape)
+                    newvectors = npy.ones((40, 2000))
+                    n_neighbors = 3
+                    target1 = npy.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                         1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                         2, 2, 2, 2, 2, 2, 2, 2, 2, 2]).T
+                    target2 = npy.array([3, 3, 3, 3, 3, 3, 3, 3, 3, 3]).T
+                    for x in range(1, 41):
+                        for y in range(0, 2000):
+                            newvectors[x - 1, y] = (vectors[x, y] - npy.min(vectors[1:41, y])) / (
+                                        npy.max(vectors[1:41, y]) - npy.min(vectors[1:41, y]))
+                    #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                    weight = []
+                    for i in range(0, 2000):
+                        weight.append(
+                            (npy.max(npy.std(vectors, axis=0)) - npy.std(vectors[:, i])) / (
+                                npy.sum(npy.max(npy.std(vectors, axis=0)) - npy.std(vectors, axis=0)))
+                        )
+                    # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+                    pos = neighbors.KNeighborsClassifier(n_neighbors,
+                                                         weights="uniform",
+                                                         metric="wminkowski",
+                                                         metric_params={
+                                                             'w': npy.array(weight)
+                                                         }, p=1)
+                    print(newvectors[:30, :].shape, target1.shape)
+                    posmodel = pos.fit(newvectors[:30, :], target1)
+                    joblib.dump(posmodel, '{}_pos.model'.format(strt),compress=3)
+                    dist_pos, ind_pos = pos.kneighbors(newvectors[:30, :], n_neighbors=3)
+                    E_distance_pos = npy.mean(npy.mean(dist_pos, axis=1))
+
+                    baseline = neighbors.KNeighborsClassifier(n_neighbors,
+                                                              weights="uniform",
+                                                              metric="wminkowski",
+                                                              metric_params={
+                                                                  'w': npy.array(weight)
+                                                              }, p=1)
+                    blmodel = baseline.fit(newvectors[30:, :], target2)
+                    joblib.dump(blmodel, '{}_bl.model'.format(strt),compress=3)
+                    dist_bl, ind_bl = baseline.kneighbors(newvectors[:30, :], n_neighbors=3)
+                    E_distance_bl = npy.mean(npy.mean(dist_bl, axis=1))
+                    a = 0.19
+                    threshold = (1 - a) * E_distance_pos + a * E_distance_bl
+                    print("Threshold is ：{}".format(threshold))
+                    Session = sessionmaker(bind=engine)
+                    session = Session()
+                    th = Threshold(threshold=threshold)
+                    session.add(th)
+                    session.commit()
+                    session.close()
+                # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
                 elif self.message['PAGEID'] == 'createclock':
                     pass
                 elif self.message['PAGEID'] == 'deleteclock':
@@ -127,6 +206,8 @@ class Server(threading.Thread):
             Client_sockect.close()
         except Exception as e:
             print("Server error!",e)
+        Server_sock.close()
+
 
 
 # vibration 发出振动注册用户

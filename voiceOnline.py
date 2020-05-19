@@ -20,7 +20,7 @@ else:
 API_KEY = 'XypoAV8UxaKdea84k6ahLgLX'
 SECRET_KEY = 'GpGbD6uf3oKANQYRI4Bqf5NTrlKsjxNx'
 
-TEXT = "门锁绑定成功。"
+TEXT = "设备已发现。"
 
 # 发音人选择, 基础音库：0为度小美，1为度小宇，3为度逍遥，4为度丫丫，
 # 精品音库：5为度小娇，103为度米朵，106为度博文，110为度小童，111为度小萌，默认为度小美

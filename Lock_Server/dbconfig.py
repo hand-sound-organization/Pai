@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine,Column, String, Integer
+from sqlalchemy import create_engine,Column, String, Integer,Float
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -15,6 +15,15 @@ class User(Base):
 
     def __repr__(self):
         return "<User(username='%s')>" % (self.username)
+
+
+class Threshold(Base):
+    __tablename__ = 'threshold'
+    id = Column(Integer, primary_key=True)
+    threshold = Column(Float)
+
+    def __repr__(self):
+        return "<Threshold(threshold='%f')>" % (self.threshold)
 
 
 # Base.metadata.drop_all()
