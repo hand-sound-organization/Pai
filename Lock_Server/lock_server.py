@@ -9,6 +9,7 @@ import threading
 import  json
 from Lock_Server.dbconfig import Base, engine, User,Threshold
 from sqlalchemy.orm import sessionmaker
+import requests
 
 
 import numpy as npy
@@ -38,6 +39,7 @@ class Server(threading.Thread):
         self.protocol = protocal
         self.networkid = networkid
         self.event = event
+        self.flag = True
         return
 
     def run(self):
@@ -196,9 +198,28 @@ class Server(threading.Thread):
                     session.close()
                 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
                 elif self.message['PAGEID'] == 'createclock':
-                    pass
+                    self.flag = False
                 elif self.message['PAGEID'] == 'deleteclock':
-                    pass
+                    self.flag = True
+                    GPIO.event_detected(11)
+                elif self.message['PAGEID'] == "attack":
+                    self.flag = False
+                    Session = sessionmaker(bind=engine)
+                    session = Session()
+                    data = {
+                        "name": 'Stranger',
+                        "event": 'attack',
+                        "occur_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "app_username": session.query(User).filter(
+                            User.username == self.message['USERNAME']).one().username,
+                        "lock_id": session.query(User).filter(User.username == self.message['USERNAME']).one().lockid,
+                        "isSafe": 'True'
+                    }
+
+                    response = requests.post("http://192.168.101.10:5000/app/WarningInfo", data)
+                    print(response)
+                    print(response.content.decode())
+                    print(response.headers)
 
                 if self.message['IsOver'] == "True":  # 会话结束标识 ‘LockSSDP End’
                     time.sleep(0.5)

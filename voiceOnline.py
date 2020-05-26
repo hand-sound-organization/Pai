@@ -20,11 +20,11 @@ else:
 API_KEY = 'XypoAV8UxaKdea84k6ahLgLX'
 SECRET_KEY = 'GpGbD6uf3oKANQYRI4Bqf5NTrlKsjxNx'
 
-TEXT = "设备已发现。"
+TEXT = "欢迎使用V-shield。"
 
 # 发音人选择, 基础音库：0为度小美，1为度小宇，3为度逍遥，4为度丫丫，
 # 精品音库：5为度小娇，103为度米朵，106为度博文，110为度小童，111为度小萌，默认为度小美
-PER = 5
+PER = 6
 # 语速，取值0-15，默认为5中语速
 SPD = 3
 # 音调，取值0-15，默认为5中语调

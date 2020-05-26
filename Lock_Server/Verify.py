@@ -12,6 +12,7 @@ from Lock_Server.dbconfig import Base, engine, User,Threshold
 from sqlalchemy.orm import sessionmaker
 
 
+
 class Vibration(threading.Thread):
     def __init__(self,event):
         super().__init__()
