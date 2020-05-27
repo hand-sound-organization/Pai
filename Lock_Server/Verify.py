@@ -44,6 +44,11 @@ class Vibration(threading.Thread):
                 files = os.listdir(path)
                 for file_bl in files:
                     position_bl = path + '\\' + file_bl
+                    if "SVM" in position_bl:
+                        ctl_svm = joblib.load(position_bl)
+                        result = ctl_svm.predict(vector)
+                        if result[0] == 0:
+                            break
                     if "bl.model" in position_bl:
                         head_bl = position_bl[:position_bl.find("bl.model")]
                         for file_pos in files:

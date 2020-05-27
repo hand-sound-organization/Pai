@@ -16,7 +16,7 @@ import numpy as npy
 from Lock_Server.MFCC import MFCC
 from Lock_Server.play import Play
 from multiprocessing import Queue,Manager
-from sklearn import neighbors
+from sklearn import neighbors,svm
 import joblib
 
 logger = gen_logger('LockSSDP')
@@ -164,7 +164,6 @@ class Server(threading.Thread):
                                 npy.sum(npy.max(npy.std(vectors, axis=0)) - npy.std(vectors, axis=0)))
                         )
                     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
                     pos = neighbors.KNeighborsClassifier(n_neighbors,
                                                          weights="uniform",
                                                          metric="wminkowski",
